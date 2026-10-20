@@ -6,6 +6,8 @@ import helmet from "helmet";
 
 import { env } from "./config/env";
 import { prisma } from "./lib/prisma";
+import { errorHandler } from "./middleware/error";
+import { globalLimiter } from "./middleware/rateLimit";
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use(
   }),
 );
 app.use(express.json({ limit: "10kb" }));
+app.use(globalLimiter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok", ts: Date.now() });
@@ -33,6 +36,8 @@ app.get("/health/db", async (_req: Request, res: Response) => {
     res.status(503).json({ status: "db_down" });
   }
 });
+
+app.use(errorHandler);
 
 const port = env.PORT;
 app.listen(port, () => {
