@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import { prisma } from "./lib/prisma";
 import { errorHandler } from "./middleware/error";
 import { globalLimiter } from "./middleware/rateLimit";
+import authRouter from "./routes/auth";
 
 const app = express();
 
@@ -36,6 +37,8 @@ app.get("/health/db", async (_req: Request, res: Response) => {
     res.status(503).json({ status: "db_down" });
   }
 });
+
+app.use("/auth", authRouter);
 
 app.use(errorHandler);
 
