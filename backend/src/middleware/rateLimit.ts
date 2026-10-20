@@ -14,7 +14,7 @@
 // - globalLimiter: 100 requests per IP per 15 minutes across the whole app.
 //   Backstop against crawlers / scrapers / runaway clients; sits behind the
 //   strict auth/route limiters so /health and other cheap endpoints stay cheap.
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit"
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -47,7 +47,12 @@ export const globalLimiter = rateLimit({
 export const submissionLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
-  keyGenerator: (req) => (req as unknown as { user?: { id?: string } }).user?.id ?? req.ip ?? "unknown",
+  keyGenerator: (req) => {
+    const authed = (req as any).user?.id as string | undefined
+    if (authed) return authed
+    // IPv6 subnet-safe fallback — /56 by default
+    return req.ip ? ipKeyGenerator(req.ip) : "unknown"
+  },
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { error: "TooManySubmissions" },
