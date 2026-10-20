@@ -1,28 +1,19 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Hero } from "@/components/marketing/hero"
+import { HowItWorks } from "@/components/marketing/how-it-works"
+import { SiteFooter } from "@/components/marketing/site-footer"
+import { SiteNavbar } from "@/components/marketing/site-navbar"
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-24">
-      <div className="flex w-full max-w-md flex-col items-center gap-8 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight">SubmissionPulse</h1>
-        <p className="text-muted-foreground">
-          Submit and review learning artifacts, structured.
-        </p>
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-          <Link href="/login" className="w-full sm:w-auto">
-            <Button className="w-full">Sign in</Button>
-          </Link>
-          <Link href="/signup" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full">
-              Sign up as Student
-            </Button>
-          </Link>
+    <div className="flex min-h-screen flex-col bg-background">
+      <SiteNavbar />
+      <main className="flex-1">
+        <Hero />
+        <div id="how-it-works">
+          <HowItWorks />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Mentor accounts are provisioned by the admin. Contact your mentor coordinator for access.
-        </p>
-      </div>
+      </main>
+      <SiteFooter />
     </div>
-  );
+  )
 }

@@ -26,12 +26,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.refresh();
   }
 
+  // Smart logo redirect: send the user back to their own home, not the
+  // public landing page. Defaults to /dashboard so the link is meaningful
+  // even before the session has been read from localStorage.
+  const homeLink = user?.role === "STUDENT" ? "/submit" : "/dashboard"
+
   return (
     <div className="flex min-h-full flex-1 flex-col bg-muted/30">
       <header className="sticky top-0 z-20 border-b bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
-            SubmissionPulse
+          <Link href={homeLink} className="flex shrink-0 items-center">
+            {/* Plain <img> bypasses next/image optimizer quirks with this asset */}
+            <img
+              src="/splogo.png"
+              alt="SubmissionPulse"
+              className="h-10 w-auto object-contain md:h-12"
+            />
           </Link>
 
           {user ? (
