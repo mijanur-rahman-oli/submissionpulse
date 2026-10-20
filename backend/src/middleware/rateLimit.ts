@@ -41,3 +41,14 @@ export const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "TooManyRequests" },
 });
+
+// Per-user. MUST be mounted AFTER requireAuth so req.user is populated. Falls
+// back to req.ip if unauthenticated (which the route guards against anyway).
+export const submissionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => (req as unknown as { user?: { id?: string } }).user?.id ?? req.ip ?? "unknown",
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "TooManySubmissions" },
+});

@@ -9,6 +9,7 @@ import { prisma } from "./lib/prisma";
 import { errorHandler } from "./middleware/error";
 import { globalLimiter } from "./middleware/rateLimit";
 import authRouter from "./routes/auth";
+import projectsRouter from "./routes/projects";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.get("/health/db", async (_req: Request, res: Response) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/projects", projectsRouter);
 
 app.use(errorHandler);
 

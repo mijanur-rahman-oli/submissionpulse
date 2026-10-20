@@ -110,3 +110,66 @@ The current `MemoryStore` is per-process. Two replicas = two quotas.
 | POST   | `/auth/logout`   | bearer      | Placeholder for future revocation.   |
 | GET    | `/health`        | public      | Liveness.                            |
 | GET    | `/health/db`     | public      | DB-aware readiness.                  |
+
+---
+
+## Security
+
+> Implementation checklist — every bullet should match the code; if it drifts, update both. The narrative above remains authoritative for design intent; the bullets below are the per-control summary used during review.
+
+### Authentication
+
+- JWT signed with HS256. Algorithm is pinned on verify (`algorithms: ["HS256"]`) to prevent algorithm-confusion attacks.
+- Token payload contains only `sub` (user id) and `role`. No PII, no permissions list.
+- Expiry: 1 day (configurable via `JWT_EXPIRES_IN`).
+- Issuer and audience claims (`iss: "submissionpulse"`, `aud: "submissionpulse-app"`) are verified on every request.
+- `JWT_SECRET` is validated at boot: minimum 32 characters. The server refuses to start with a weak secret.
+
+### Passwords
+
+- Hashed with bcrypt, 12 rounds.
+- Max password length capped at 72 characters (bcrypt's truncation limit) — prevents user surprise where two "different" passwords would authenticate identically.
+- Login is timing-safe: a `DUMMY_HASH` is compared against when the email is not found, so "user doesn't exist" and "wrong password" take the same time. Both return the identical `InvalidCredentials` body.
+
+### Role-Based Access Control
+
+- Two roles only: `STUDENT` and `MENTOR` (admin is seeded as `MENTOR` per assessment scope).
+- Student signup endpoint **hard-codes** `role: "STUDENT"`. A client-supplied `role` is rejected at the schema layer (`.strict()`) AND discarded by the route — defense in depth against privilege escalation.
+- Every protected route uses the `requireAuth → requireRole(...)` chain. `requireRole` is never used standalone.
+- `/auth/me` returns only safe user fields (`id, email, name, role`). `passwordHash` is never selected in any response.
+
+### Rate limiting
+
+- Login: 5 **failed** attempts per 15 min per IP (`skipSuccessfulRequests: true` — legitimate users aren't locked out by normal usage).
+- Signup: 3 per hour per IP.
+- Submission: 5 per hour per authenticated student (keyed on `req.user.id`).
+- Global: 100 requests per 15 min per IP.
+- Backing store: `express-rate-limit` in-memory. **Production migration path:** Redis store (`rate-limit-redis`) for multi-instance deployments. Documented as future work.
+
+### Input validation
+
+- All request bodies and query strings are parsed through Zod schemas.
+- Bodies use `.strict()` to reject unexpected keys — closes the door on mass-assignment / role-injection attacks.
+- Payload size capped at 10 kB (`express.json({ limit: "10kb" })`).
+- URLs are validated to require `https://` — avoids mixed-content on the frontend and prevents `javascript:` scheme XSS.
+
+### Transport & headers
+
+- `helmet()` sets standard security headers (HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy).
+- `x-powered-by` header is disabled — no framework fingerprinting.
+- CORS: single configured origin (`FRONTEND_ORIGIN`), `credentials: true`, only `Content-Type` and `Authorization` headers allowed.
+
+### Error handling
+
+- Errors never leak stack traces. Production responses are uniform `{ error: "<code>" }`.
+- Validation errors return `{ error: "ValidationError", issues: [...] }` with field-level detail (safe — issues only reference user input).
+- Login failures return the same body for "user not found" and "wrong password" (no user enumeration).
+- Prisma `P2002` (unique violation) is mapped to `409 Duplicate<Field>` for user-friendly messages; the raw constraint name never reaches the client.
+
+### Known limitations (with production migration path)
+
+1. **Token storage** — tokens are stored in `localStorage`. This is XSS-readable. Trade-off chosen for assessment scope (no server-side session/refresh infrastructure). *Production path:* HttpOnly, `Secure`, `SameSite=Strict` cookies + CSRF token (double-submit cookie pattern) + short-lived access tokens with refresh rotation.
+2. **In-memory rate limiter** — resets on process restart; not shared across replicas. *Production path:* Redis-backed store.
+3. **No logout invalidation** — `POST /auth/logout` is a client-side clear. Tokens remain valid until expiry. *Production path:* JWT `jti` claim + short-lived blacklist in Redis, or 15-min access + refresh tokens.
+4. **No email verification** — signup accepts any syntactically valid email. *Production path:* send verification link, gate the account until clicked. Out of scope for the assessment.
+5. **Audit trail is console-only** — status transitions are logged (`[audit] project ... -> ...`) but not persisted. *Production path:* `AuditLog` Prisma model with `{ actorId, targetId, action, before, after, createdAt }`.

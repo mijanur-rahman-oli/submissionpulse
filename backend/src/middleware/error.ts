@@ -25,7 +25,18 @@ export function errorHandler(
 
   const anyErr = err as { code?: unknown; meta?: { target?: unknown } };
   if (anyErr?.code === "P2002") {
-    res.status(409).json({ error: "Duplicate", field: anyErr.meta?.target });
+    const target = Array.isArray(anyErr.meta?.target)
+      ? anyErr.meta.target.join(",")
+      : String(anyErr.meta?.target ?? "");
+    if (target.includes("repoUrl")) {
+      res.status(409).json({ error: "DuplicateRepoUrl" });
+      return;
+    }
+    if (target.includes("name")) {
+      res.status(409).json({ error: "DuplicateProjectName" });
+      return;
+    }
+    res.status(409).json({ error: "Duplicate" });
     return;
   }
   if (anyErr?.code === "P2025") {
