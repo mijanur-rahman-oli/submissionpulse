@@ -23,6 +23,7 @@ function DropdownMenuContent({
   side = "bottom",
   sideOffset = 4,
   className,
+  children,
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<
@@ -42,7 +43,12 @@ function DropdownMenuContent({
           data-slot="dropdown-menu-content"
           className={cn("z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:overflow-hidden data-closed:fade-out-0 data-closed:zoom-out-95", className )}
           {...props}
-        />
+        >
+          {/* Base UI expects Popup > List > Item. Without the List the popup has
+              no registered listElement, so items are not part of a menu list and
+              the menu cannot position/focus correctly. */}
+          <MenuPrimitive.List>{children}</MenuPrimitive.List>
+        </MenuPrimitive.Popup>
       </MenuPrimitive.Positioner>
     </MenuPrimitive.Portal>
   )
@@ -56,11 +62,14 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: MenuPrimitive.GroupLabel.Props & {
+}: React.HTMLAttributes<HTMLDivElement> & {
   inset?: boolean
 }) {
+  // Rendered as a plain <div>. MenuPrimitive.GroupLabel requires a MenuGroup
+  // parent (it sets the group's aria-labelledby) and our consumer passes a
+  // name+email block — it has no group context.
   return (
-    <MenuPrimitive.GroupLabel
+    <div
       data-slot="dropdown-menu-label"
       data-inset={inset}
       className={cn(
@@ -76,10 +85,18 @@ function DropdownMenuItem({
   className,
   inset,
   variant = "default",
+  onSelect,
   ...props
 }: MenuPrimitive.Item.Props & {
   inset?: boolean
   variant?: "default" | "destructive"
+  /**
+   * Convenience alias for `onClick`. Base UI's Menu.Item exposes `onClick`
+   * (plus `closeOnClick`) — it has no `onSelect` — so this maps the Radix-style
+   * name onto the real handler. Previously `onSelect` was silently forwarded to
+   * the underlying element and item actions never fired.
+   */
+  onSelect?: (event: React.MouseEvent<HTMLDivElement>) => void
 }) {
   return (
     <MenuPrimitive.Item
@@ -91,6 +108,7 @@ function DropdownMenuItem({
         className
       )}
       {...props}
+      onClick={onSelect ?? props.onClick}
     />
   )
 }

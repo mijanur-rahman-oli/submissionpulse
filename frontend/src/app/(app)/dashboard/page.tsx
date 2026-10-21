@@ -47,6 +47,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Check,
+  X,
 } from "lucide-react"
 
 type Status = "PENDING" | "APPROVED" | "REJECTED"
@@ -172,62 +174,75 @@ function Inner() {
     <div className="space-y-6">
       <StatsCards stats={loadingStats ? null : stats} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Projects</CardTitle>
+      <Card className="rounded-xl border-0 shadow-sm">
+        <CardHeader className="border-b">
+          <CardTitle className="text-lg">Submissions</CardTitle>
           <CardDescription>Review student submissions</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-2">
-            <div className="relative md:max-w-sm w-full">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <CardContent>
+          {/* ---- Filter bar: search on the left, filters on the right ---- */}
+          <div className="flex flex-col gap-3 pb-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
+                className="h-10 pl-9"
                 placeholder="Search name, student, or email"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="pl-8"
               />
             </div>
 
-            <Select
-              value={status}
-              onValueChange={(v) => setStatus(v as Filter)}
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All statuses</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-3">
+              <Select
+                value={status}
+                onValueChange={(v) => setStatus(v as Filter)}
+              >
+                <SelectTrigger className="h-10 w-[160px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All statuses</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={String(pageSize)}
-              onValueChange={(v) => setPageSize(Number(v))}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10 / page</SelectItem>
-                <SelectItem value="25">25 / page</SelectItem>
-                <SelectItem value="50">50 / page</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => setPageSize(Number(v))}
+              >
+                <SelectTrigger className="h-10 w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="25">25 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-lg border">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[64px]">Actions</TableHead>
+                <TableRow className="border-b-0 bg-gray-50/50 hover:bg-gray-50/50">
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Project
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Student
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Submitted
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Status
+                  </TableHead>
+                  <TableHead className="w-[64px] text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -310,16 +325,11 @@ function Inner() {
                           ) : (
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                render={
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label="Open actions"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                }
-                              />
+                                aria-label="Open actions"
+                                className="inline-flex size-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>
                                   Change status
@@ -331,6 +341,7 @@ function Inner() {
                                     updateStatus(p.id, "APPROVED")
                                   }
                                 >
+                                  <Check className="text-green-600" />
                                   Approve
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
@@ -339,6 +350,7 @@ function Inner() {
                                     updateStatus(p.id, "REJECTED")
                                   }
                                 >
+                                  <X className="text-red-600" />
                                   Reject
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
