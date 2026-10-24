@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation"
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -49,25 +50,29 @@ export function UserNav({ user }: { user: User }) {
   return (
     <DropdownMenu>
       {/*
-        DropdownMenuTrigger already renders a native <button>; applying the
-        ghost-button styling directly avoids nesting one button inside
-        another. Classes mirror the PHASE 3.5 spec: flex, gap-2, px-2,
-        hover:bg-gray-100, rounded-full.
+        The trigger renders AS the Button (Base UI's `render` prop is the
+        equivalent of Radix's `asChild`), so the avatar + name are a single
+        button instead of a button nested inside another button.
       */}
       <DropdownMenuTrigger
-        className="flex items-center gap-2 px-2 h-10 rounded-full hover:bg-gray-100 data-[popup-open]:bg-gray-100"
-        aria-label="Open user menu"
-      >
-        <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-brand-gradient font-semibold text-white">
-            {initialOf(user.name)}
-          </AvatarFallback>
-        </Avatar>
-        <span className="text-sm font-medium hidden md:block">
-          {user.name}
-        </span>
-        <ChevronDown className="h-4 w-4" />
-      </DropdownMenuTrigger>
+        render={
+          <Button
+            variant="ghost"
+            className="relative flex h-10 items-center gap-2 rounded-full px-3 outline-none focus-visible:ring-0"
+            aria-label="Open user menu"
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-brand-gradient font-semibold text-white">
+                {initialOf(user.name)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium hidden md:block">
+              {user.name}
+            </span>
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        }
+      />
 
       <DropdownMenuContent align="end" className="min-w-48">
         <DropdownMenuItem

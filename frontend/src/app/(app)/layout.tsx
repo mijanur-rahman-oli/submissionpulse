@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils"
 import { getSession, type User } from "@/lib/auth"
 import { TopNavbar } from "@/components/top-navbar"
+import { MobileNav } from "@/components/mobile-nav"
 
 type NavItem = {
   href: string
@@ -97,7 +98,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ---- Main content: clears the navbar (pt-28) and the sidebar (md:ml-64) ---- */}
-      <main className="md:ml-64 pt-28 px-6 pb-12">{children}</main>
+      <main className="md:ml-64 pt-28 px-6 pb-12">
+        <div className="flex items-center md:hidden mb-6 border-b pb-4">
+          <MobileNav />
+          <span className="ml-4 font-semibold text-lg">Menu</span>
+        </div>
+        {children}
+      </main>
     </div>
   )
 }
